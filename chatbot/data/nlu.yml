@@ -55,3 +55,58 @@ nlu:
     - {"smoking_info": "yes"}
     - {"smoking_years": "1-5 years"}
     - {"smoking_frequency": "6-10 per day"}
+
+- intent: upload_files
+  examples: |
+    - upload_files
+    - upload
+    - I want to upload files
+    - upload my test results
+    - let me upload
+    - I have files to upload
+    - upload documents
+
+- intent: no_results
+  examples: |
+    - no_results
+    - I don't have test results
+    - no test results
+    - I don't have any tests
+    - no recent exams
+    - I haven't done any tests
+    - no medical tests
+    - I don't have any recent test results
+
+# Add examples for file upload messages
+- intent: inform
+  examples: |
+    - Uploaded files: test_result.pdf
+    - Uploaded files: blood_test.jpg, xray.png
+    - Uploaded files: mri_scan.pdf, lab_results.doc
+    - Files uploaded: medical_report.pdf
+
+# Add these intents to your nlu.yml file
+
+- intent: upload_more_files
+  examples: |
+    - upload more files
+    - I have more files
+    - upload additional files
+    - more files to upload
+    - yes, I have more files
+    - I want to upload more
+    - upload more
+    - additional files
+
+- intent: no_more_files
+  examples: |
+    - no more files
+    - that's all
+    - no additional files
+    - I'm done uploading
+    - no more
+    - that's it
+    - finished uploading
+    - no other files
+    - I don't have more files
+    - done

@@ -35,24 +35,10 @@ function init() {
 				<span class='msg'>Hi, How can i help you?</span>
 			</div>
 
-            <!-- <div class='bot-msg'>
-                <img class='bot-img' src ='${botLogoPath}' />
-                <div class='response-btns'>
-                    <button class='btn-primary' onclick= 'userResponseBtn(this)' value='/sign_in'>sample btn</button>            
-                </div>
-			</div> -->
-
-			<!-- <div class='bot-msg'>
-				<img class='msg-image' src = "https://i.imgur.com/nGF1K8f.jpg" />
-			</div> -->
-
-			<!-- <div class='user-msg'>
-				<span class='msg'>Hi, How can i help you?</span>
-			</div> -->
-			
+            <!-- File upload input (hidden) -->
+            <input type="file" id="fileUpload" multiple accept="image/*,.pdf,.doc,.docx" style="display: none;">
 
 		</div>
-
 
 		<div class='chat-input-area'>
 			<input type='text' autofocus class='chat-input' onkeypress='return givenUserInput(event)' placeholder='Type a message ...' autocomplete='off'>
@@ -75,10 +61,13 @@ function init() {
     chatArea = document.querySelector(".chat-area")
     chatInput = document.querySelector(".chat-input")
     expandWindow = document.querySelector(".expand-chat-window")
+    fileUpload = document.querySelector("#fileUpload")
     root = document.documentElement;
     chatPopup.style.display = "none"
     var host = "http://localhost:5005/webhooks/rest/webhook"; // Update this URL to match your backend server configuration
 
+    // File upload event listener
+    fileUpload.addEventListener('change', handleFileUpload);
 
     //------------------------ ChatBot Toggler -------------------------
 
@@ -124,13 +113,72 @@ function init() {
 }
 
 // end of init function
-
-
-
 var passwordInput = false;
 
 function userResponseBtn(e) {
-    send(e.value);
+    // Check if user clicked upload button
+    if (e.value === 'upload_files' || e.value === 'upload_more_files') {
+        triggerFileUpload();
+    } else {
+        send(e.value);
+    }
+}
+
+// Function to trigger file upload dialog
+function triggerFileUpload() {
+    fileUpload.click();
+}
+
+// Function to handle file upload
+function handleFileUpload(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        let fileNames = [];
+        let fileDetails = [];
+        
+        for (let i = 0; i < files.length; i++) {
+            fileNames.push(files[i].name);
+            fileDetails.push({
+                name: files[i].name,
+                size: formatFileSize(files[i].size),
+                type: files[i].type
+            });
+        }
+        
+        // Display uploaded files in chat
+        displayUploadedFiles(fileDetails);
+        
+        // Send file information to Rasa
+        const fileMessage = `Uploaded files: ${fileNames.join(', ')}`;
+        send(fileMessage);
+        
+        // Reset file input
+        event.target.value = '';
+    }
+}
+
+// Function to display uploaded files in chat
+function displayUploadedFiles(fileDetails) {
+    let fileListHTML = '<div class="uploaded-files"><strong>Uploaded Files:</strong><ul>';
+    
+    fileDetails.forEach(file => {
+        fileListHTML += `<li>${file.name} (${file.size})</li>`;
+    });
+    
+    fileListHTML += '</ul></div>';
+    
+    let temp = `<div class="user-msg"><span class="msg">${fileListHTML}</span></div>`;
+    chatArea.innerHTML += temp;
+    scrollToBottomOfResults();
+}
+
+// Function to format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 // to submit user input when he presses enter
@@ -159,8 +207,6 @@ function setUserResponse() {
     }
     scrollToBottomOfResults();
 }
-
-
 
 function scrollToBottomOfResults() {
     chatArea.scrollTop = chatArea.scrollHeight;
@@ -198,7 +244,6 @@ function send(message) {
     });
     chatInput.focus();
 }
-
 
 //------------------------------------ Set bot response -------------------------------------
 function setBotResponse(val) {
@@ -259,9 +304,6 @@ function setBotResponse(val) {
     }, 500);
 }
 
-
-
-
 function mobileView() {
     $('.chat-popup').width($(window).width());
 
@@ -291,8 +333,6 @@ function chatbotTheme(theme) {
         color: "#B721FF",
         background: "linear-gradient(19deg, #21D4FD 0%, #B721FF 100%)"
     }
-
-
 
     if (theme === "orange") {
         root.style.setProperty('--chat-window-color-theme', orange.color);

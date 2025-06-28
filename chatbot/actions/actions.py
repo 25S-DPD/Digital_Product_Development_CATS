@@ -282,8 +282,12 @@ class ValidateMedicalHistoryForm(FormValidationAction):
                     "smoking_frequency": "N/A"
                 }
             else:
-                # Store the smoking status for later combination
-                return {"smoking_info": actual_value}
+                # Reset duration and frequency slots when changing from No to Yes/Used to
+                return {
+                    "smoking_info": actual_value,
+                    "smoking_duration": None,  # Reset to ensure questions are asked
+                    "smoking_frequency": None  # Reset to ensure questions are asked
+                }
         else:
             dispatcher.utter_message(text="Please select Yes, Used to, or No.")
             return {"smoking_info": None}
@@ -324,7 +328,6 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         valid_frequencies = ["Less than 5", "5-10", "10-15", "15-20", "20+"]
         if slot_value in valid_frequencies:
             # Get the smoking duration that was already collected
-            # Fixed the typo: smoking_infp -> smoking_info
             smoking_status = tracker.get_slot("smoking_info")
             smoking_duration = tracker.get_slot("smoking_duration")
             
@@ -353,10 +356,19 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         # Get the standard next slot
         next_slot = await super().next_slot_to_request(dispatcher, tracker, domain)
         
-        # If the next slot is smoking_duration or smoking_frequency 
-        # but user doesn't smoke, skip to medicine_info
+        # Check if smoking_info is currently "No" AND we're not in the middle of changing it
         smoking_info = tracker.get_slot("smoking_info")
-        if smoking_info == "No" and next_slot in ["smoking_duration", "smoking_frequency"]:
+        
+        # Only skip smoking questions if:
+        # 1. smoking_info is "No"
+        # 2. smoking_duration is already set to "N/A" (meaning we've processed the "No" response)
+        # 3. We're trying to request smoking_duration or smoking_frequency
+        smoking_duration = tracker.get_slot("smoking_duration")
+        
+        if (smoking_info == "No" and 
+            smoking_duration == "N/A" and 
+            next_slot in ["smoking_duration", "smoking_frequency"]):
+            
             # Find the next slot after smoking questions
             required_slots = await self.required_slots(
                 domain.get("slots", {}), dispatcher, tracker, domain

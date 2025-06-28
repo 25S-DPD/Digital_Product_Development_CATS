@@ -5,53 +5,289 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/chatbot-ui.css">
-    <title>Medical History ChatBot</title>
-
+    <title>Medical History Form - Patient Information</title>
+    
     <style>
+        /* Import Inter font to match the CSS design system */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Use CSS variables from the design system */
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary-color: #64748b;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius-lg: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+        }
+        
+        * {
+            margin: 1;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #e5e5e5;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            width: 100%;
+            font-family: var(--font-family);
+            background-color: var(--gray-50);
+            min-height: 100vh;
+            color: var(--gray-900);
+            line-height: 1.6;
+            padding: var(--spacing-lg);
         }
         
-        section {
-            max-width: 1100px;
-            margin: auto;
+        .container {
+            max-width: 800px;
+            margin: 4rem auto;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            color: var(--white);
+            padding: var(--spacing-xl);
             text-align: center;
-            padding: 0 1rem;
         }
         
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 2rem;
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
         
-        p {
-            font-size: 2rem;
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .content {
+            padding: var(--spacing-xl);
+        }
+        
+        .instructions {
+            background: var(--gray-50);
+            border-left: 4px solid var(--primary-color);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+        }
+        
+        .instructions h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .instructions li {
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .instructions li:before {
+            content: '•';
+            color: var(--primary-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .chat-prompt {
+            text-align: center;
+            padding: var(--spacing-lg);
+            background: var(--white);
+            border: 2px dashed var(--primary-light);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .chat-prompt h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .chat-prompt p {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+        
+        .privacy-notice {
+            background: var(--gray-50);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .privacy-notice h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .privacy-notice h3:before {
+            content: '🔒';
+        }
+        
+        .privacy-notice p {
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .status-indicator {
+            position: fixed;
+            top: var(--spacing-lg);
+            right: var(--spacing-lg);
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow-md);
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            z-index: 1000;
+        }
+        
+        .status-indicator.online:before {
+            content: '🟢';
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.offline:before {
+            content: '🔴';
+            margin-right: 0.5rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-md);
+            }
+            
+            .header {
+                padding: var(--spacing-lg);
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .content {
+                padding: var(--spacing-lg);
+            }
+            
+            .status-indicator {
+                position: static;
+                margin-bottom: var(--spacing-lg);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: var(--spacing-md);
+            }
+            
+            .content {
+                padding: var(--spacing-md);
+            }
+            
+            .instructions {
+                padding: var(--spacing-md);
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <section>
-        <h1>Medical History ChatBot</h1>
-        <p>Click on the chat button to start chatting</p>
-    </section>
-
+    <div class="status-indicator online">System Online</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Medical History Form</h1>
+            <p>Please provide your medical information using the chat assistant</p>
+        </div>
+        
+        <div class="content">
+            <div class="instructions">
+                <h2>How to Complete Your Medical History</h2>
+                <ul>
+                    <li>Click the chat button in the bottom-right corner to start</li>
+                    <li>Answer the questions about your medical history honestly and completely</li>
+                    <li>You can take breaks and return to continue where you left off</li>
+                    <li>If you're unsure about any information, provide your best estimate</li>
+                    <li>The process typically takes 10-15 minutes to complete</li>
+                </ul>
+            </div>
+            
+            <div class="chat-prompt">
+                <h3>Ready to Begin?</h3>
+                <p>Click the chat icon below to start filling out your medical history form</p>
+            </div>
+            
+            <div class="privacy-notice">
+                <h3>Privacy & Data Protection</h3>
+                <p>Your medical information is protected under GDPR regulations and medical confidentiality laws. All data is encrypted and securely stored. We only collect information necessary for your medical care and will not share your data with third parties without your explicit consent.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Container -->
     <div id="chat-container"></div>
+    
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="js/chatbot-ui.js"></script>
     <script>
-        createChatBot(host = 'http://localhost:5005/webhooks/rest/webhook', botLogo = "/imgs/bot-logo.png",
-            title = "Medical History BOT", welcomeMessage = "Hey, I am here to Help", inactiveMsg = "Server is down, Please contact the developer to activate it", theme = "purple")
+        // Initialize the chatbot with functional settings
+        createChatBot(
+            host = 'http://localhost:5005/webhooks/rest/webhook',
+            botLogo = "/imgs/bot-logo.png",
+            title = "Medical History Assistant",
+            welcomeMessage = "Hello! I'll help you complete your medical history form. Let's start with some basic information about you. If you do  any mistake do not worry you will be able to fix at the end!",
+            inactiveMsg = "The system is temporarily unavailable. Please try again in a few minutes or contact your healthcare provider.",
+            theme = "blue"
+        );
+        
+        // Update status indicator based on system availability
+        function checkSystemStatus() {
+            // This would typically make an API call to check system status
+            // For now, we'll assume it's online
+            $('.status-indicator').removeClass('offline').addClass('online').text('System Online');
+        }
+        
+        // Check status on load
+        checkSystemStatus();
+        
+        // Optional: Check status periodically
+        setInterval(checkSystemStatus, 60000); // Check every minute
     </script>
-
-
-
 </body>
 
 </html>

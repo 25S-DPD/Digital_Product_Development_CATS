@@ -3,3 +3,34 @@
   - action: action_summary
   - intent: deny
   - action: action_save_patient_data
+
+- story: file upload flow
+  steps:
+  - active_loop: medical_history_form
+  - slot_was_set:
+    - requested_slot: recent_exams
+  - intent: upload_files
+  - action: utter_message
+    text: "Please upload your test results using the file upload option."
+  - user_message: "Uploaded files: example.pdf"
+  - action: action_handle_file_upload
+  - intent: no_more_files
+  - action: action_handle_file_upload
+  - action: medical_history_form
+  - active_loop: null
+
+- story: file upload more files
+  steps:
+  - active_loop: medical_history_form
+  - slot_was_set:
+    - requested_slot: recent_exams
+  - user_message: "Uploaded files: example.pdf"
+  - action: action_handle_file_upload
+  - intent: upload_more_files
+  - action: action_handle_file_upload
+  - user_message: "Uploaded files: example2.pdf"
+  - action: action_handle_file_upload
+  - intent: no_more_files
+  - action: action_handle_file_upload
+  - action: medical_history_form
+  - active_loop: null
