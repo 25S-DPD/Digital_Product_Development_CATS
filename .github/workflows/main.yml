@@ -4,21 +4,32 @@ on:
   push:
     branches:
       - deploy
-  workflow_dispatch: 
+  workflow_dispatch:  
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.HETZNER_SSH_KEY }}
-
+          
       - name: Copy files to Hetzner
         run: |
-          rsync -az --exclude '.git' --exclude 'node_modules' -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.HETZNE
+          rsync -az --exclude '.git' --exclude 'node_modules' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}:/root/app
+            
+      - name: Deploy on Hetzner
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} << 'EOF'
+          cd /root/app
+          docker compose pull || true
+          docker compose build --pull
+          docker compose up -d --remove-orphans
+          EOF
