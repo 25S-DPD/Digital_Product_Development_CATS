@@ -4,27 +4,48 @@ x-common-env: &common-env
   POSTGRES_DB: red
 
 services:
+  rasa-training:
+    build: ./chatbot
+    volumes:
+      - ./chatbot/models:/app/models:rw
+      - ./chatbot/data:/app/data:ro
+      - ./chatbot/domain.yml:/app/domain.yml:ro
+    command: "train --force"
+    networks:
+      - red_network
+    environment:
+      - PYTHONPATH=/app
+    restart: "no"  
+
   rasa:
-    build: ./chatbot  # Build from your chatbot directory
+    build: ./chatbot
     ports:
       - "5005:5005"
     volumes:
       - ./chatbot/models:/app/models:rw
     command: "run --enable-api --cors '*' --debug"
     depends_on:
-      - action_server
+      rasa-training:
+        condition: service_completed_successfully
+      action_server:
+        condition: service_started
     networks:
       - red_network
+    restart: unless-stopped
 
   action_server:
-    build: ./chatbot  # Same build context as rasa service
+    build: ./chatbot
     ports:
       - "5055:5055"
     command: "run actions --cors '*'"
     env_file:
       - ./chatbot/database.env
+    depends_on:
+      rasa-training:
+        condition: service_completed_successfully
     networks:
       - red_network
+    restart: unless-stopped
 
   web:
     image: nginx:alpine
@@ -32,8 +53,11 @@ services:
       - "8080:80"
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - rasa
     networks:
       - red_network
+    restart: unless-stopped
 
 networks:
   red_network:

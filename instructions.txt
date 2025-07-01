@@ -14,4 +14,6 @@ rasa run --enable-api --cors "*"
 3 database
 psql postgresql://database_6e4a_user:be1yAtEW3Tn0tUzRKJmgJ4CRkOe4D7Gf@dpg-d0mq4a56ubrc73elc9l0-a.frankfurt-postgres.render.com/database_6e4a
 auth bearer 
+
+http://localhost:8080/chatbot.html?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkYWZjZmVkNi1mNjJlLTQ4ODQtYTI1MC02OTE4YTVhYmI2MmUiLCJnZW5kZXIiOiJtYWxlIiwiZXhwIjoxNzU4OTkyMTQwfQ.Lv0g8fciGJrmdFeL7HyGaCjv3AhhODciGFX2jNuG98E
  
