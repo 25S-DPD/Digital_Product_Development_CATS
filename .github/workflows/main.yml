@@ -14,14 +14,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Set up SSH key
+      - name: Set up SSH key with passphrase
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.HETZNER_SSH_KEY }}
+          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+            ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} \
+            "echo 'SSH connection successful'"
           
       - name: Copy files to Hetzner
         run: |
-          rsync -az --exclude '.git' --exclude 'node_modules' \
+          rsync -az --delete --exclude '.git' --exclude 'node_modules' \
+            --exclude '.github' --exclude 'README.md' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}:/root/app
             
@@ -29,7 +37,11 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} << 'EOF'
           cd /root/app
-          docker compose pull || true
+          echo "Pulling latest images..."
+          docker compose pull || echo "Pull failed, continuing..."
+          echo "Building images..."
           docker compose build --pull
+          echo "Starting services..."
           docker compose up -d --remove-orphans
+          echo "Deployment completed successfully"
           EOF
