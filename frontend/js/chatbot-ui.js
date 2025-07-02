@@ -1,5 +1,6 @@
 /*
 Makes backend API call to rasa chatbot and display output to chatbot frontend
+Enhanced with JWT token handling from URL parameters (no automatic session start)
 */
 
 function init() {
@@ -13,6 +14,16 @@ function init() {
 
     //--------------------------- Important Variables----------------------------
     botLogoPath = "./imgs/bot-logo.png"
+
+    //--------------------------- Extract JWT Token from URL -----------------------
+    jwtToken = extractTokenFromURL();
+    if (!jwtToken) {
+        console.warn("No JWT token found in URL parameters");
+        // Optionally show an error message to the user
+        // showAuthenticationError();
+    } else {
+        console.log("JWT token extracted and ready for use");
+    }
 
     //--------------------------- Chatbot Frontend -------------------------------
     const chatContainer = document.getElementById("chat-container");
@@ -32,7 +43,14 @@ function init() {
 		<div class='chat-area'>
             <div class='bot-msg'>
                 <img class='bot-img' src ='${botLogoPath}' />
-				<span class='msg'>Hi, How can i help you?</span>
+				<span class='msg'>Are you ready to start your medical history assessment?</span>
+			</div>
+			<div class='bot-msg'>
+				<img class='bot-img' src ='${botLogoPath}' />
+				<div class='response-btns ready-buttons' style='flex-direction: column; gap: 10px;'>
+					<button class='btn-primary' onclick='startChatSession()' value='yes'>Yes, I'm ready</button>
+					<button class='btn-primary' onclick='declineStart()' value='no'>Not now</button>
+				</div>
 			</div>
 
             <!-- File upload input (hidden) -->
@@ -64,7 +82,7 @@ function init() {
     fileUpload = document.querySelector("#fileUpload")
     root = document.documentElement;
     chatPopup.style.display = "none"
-    // var host = "http://localhost:5005/webhooks/rest/webhook"; // Update this URL to match your backend server configuration
+    // var host = "http://localhost:5005/webhooks/rest/webhook";
     var host = "http://91.99.232.111:5005/webhooks/rest/webhook"
 
     // File upload event listener
@@ -79,6 +97,9 @@ function init() {
             chatPopup.style.display = "flex"
             chatInput.focus();
             chatBtn.innerHTML = `<img src = "./icons/close.png" class = "icon" >`
+            
+            // JWT token is now available in metadata for any future messages
+            // No automatic session start message sent
         } else if (mobileDevice) {
             chatPopup.style.display = "none"
             chatBtn.innerHTML = `<img src = "./icons/comment.png" class = "icon" >`
@@ -89,9 +110,12 @@ function init() {
 
     chatSubmit.addEventListener("click", () => {
         let userResponse = chatInput.value.trim();
-        if (userResponse !== "") {
+        if (userResponse !== "" && chatStarted) {
             setUserResponse();
             send(userResponse)
+        } else if (!chatStarted && userResponse !== "") {
+            // Clear input if chat hasn't started yet
+            chatInput.value = "";
         }
     })
 
@@ -113,8 +137,97 @@ function init() {
     })
 }
 
+// Function to extract JWT token from URL parameters
+function extractTokenFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Try different parameter names that might contain the token
+    const tokenParams = ['token', 'jwt', 'auth', 'authorization', 'access_token'];
+    
+    for (const param of tokenParams) {
+        const token = urlParams.get(param);
+        if (token) {
+            console.log(`JWT token found in URL parameter: ${param}`);
+            return token;
+        }
+    }
+    
+    // Also check hash parameters (after #)
+    const hash = window.location.hash;
+    if (hash) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        for (const param of tokenParams) {
+            const token = hashParams.get(param);
+            if (token) {
+                console.log(`JWT token found in URL hash parameter: ${param}`);
+                return token;
+            }
+        }
+    }
+    
+    return null;
+}
+
+// REMOVED: sendSessionStart function - no longer needed
+
+// Function to show authentication error (kept for potential future use)
+function showAuthenticationError() {
+    const errorMsg = "Authentication required. Please access this chat through the proper link.";
+    var errorResponse = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><span class='msg' style='color: red;'> ${errorMsg} </span></div>`;
+    chatArea.innerHTML += errorResponse;
+    chatInput.disabled = true;
+}
+
 // end of init function
 var passwordInput = false;
+var jwtToken = null; // Global variable to store JWT token
+var chatStarted = false; // Flag to track if chat session has started
+
+// Function to start the chat session
+function startChatSession() {
+    // Hide the ready buttons
+    const readyButtons = document.querySelector('.ready-buttons');
+    if (readyButtons) {
+        readyButtons.style.display = 'none';
+    }
+    
+    // Show user's choice
+    let temp = `<div class="user-msg"><span class="msg">Yes, I'm ready</span></div>`;
+    chatArea.innerHTML += temp;
+    scrollToBottomOfResults();
+    
+    // Set flag and send hello message to trigger the greet intent
+    chatStarted = true;
+    send("hello");
+}
+
+// Function to handle decline
+function declineStart() {
+    // Hide the ready buttons
+    const readyButtons = document.querySelector('.ready-buttons');
+    if (readyButtons) {
+        readyButtons.style.display = 'none';
+    }
+    
+    // Show user's choice
+    let temp = `<div class="user-msg"><span class="msg">Not now</span></div>`;
+    chatArea.innerHTML += temp;
+    
+    // Show bot response
+    var BotResponse = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><span class='msg'>No problem! Click "Yes, I'm ready" when you're ready to begin your medical history assessment.</span></div>`;
+    chatArea.innerHTML += BotResponse;
+    scrollToBottomOfResults();
+    
+    // Re-show the ready buttons after a brief delay
+    setTimeout(() => {
+        var newButtons = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><div class='response-btns ready-buttons' style='flex-direction: column; gap: 10px;'>
+            <button class='btn-primary' onclick='startChatSession()' value='yes'>Yes, I'm ready</button>
+            <button class='btn-primary' onclick='declineStart()' value='no'>Not now</button>
+        </div></div>`;
+        chatArea.innerHTML += newButtons;
+        scrollToBottomOfResults();
+    }, 1000);
+}
 
 function userResponseBtn(e) {
     // Check if user clicked upload button
@@ -186,9 +299,13 @@ function formatFileSize(bytes) {
 function givenUserInput(e) {
     if (e.keyCode == 13) {
         let userResponse = chatInput.value.trim();
-        if (userResponse !== "") {
+        if (userResponse !== "" && chatStarted) {
             setUserResponse()
             send(userResponse)
+        } else if (!chatStarted) {
+            // Prevent typing before clicking "Yes, I'm ready"
+            chatInput.value = "";
+            // Optional: Show a message reminding user to click the button first
         }
     }
 }
@@ -217,20 +334,38 @@ function scrollToBottomOfResults() {
 Frontend Part Completed
 ****************************************************************/
 
-// host = 'http://localhost:5005/webhooks/rest/webhook'
+// Enhanced send function with JWT token in metadata (unchanged)
 function send(message) {
+    // Disable input during initial ready check
+    if (!chatStarted && message !== "hello") {
+        return;
+    }
+    
     chatInput.type = "text"
     passwordInput = false;
     chatInput.focus();
     console.log("User Message:", message)
+    
+    // Prepare request data with JWT token in metadata
+    const requestData = {
+        "message": message,
+        "sender": "User"
+    };
+    
+    // Add JWT token to metadata if available
+    if (jwtToken) {
+        requestData.metadata = {
+            "jwt_token": jwtToken,
+            "authorization": `Bearer ${jwtToken}`
+        };
+        console.log("Sending message with JWT token in metadata");
+    }
+    
     $.ajax({
         url: host,
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            "message": message,
-            "sender": "User"
-        }),
+        data: JSON.stringify(requestData),
         success: function(data, textStatus) {
             if (data != null) {
                 setBotResponse(data);
@@ -240,7 +375,6 @@ function send(message) {
         error: function(errorMessage) {
             setBotResponse("");
             console.log('Error' + errorMessage);
-
         }
     });
     chatInput.focus();
@@ -316,6 +450,9 @@ function mobileView() {
         chatPopup.style.right = "0"
             // chatPopup.style.transition = "none"
         expandWindow.innerHTML = `<img src = "./icons/close.png" class = "icon" >`
+        
+        // JWT token is available in metadata for any future messages
+        // No automatic session start message sent for mobile either
     }
 }
 

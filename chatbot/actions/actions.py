@@ -244,7 +244,6 @@ from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.forms import FormValidationAction
 from rasa_sdk.types import DomainDict
-
 class ValidateMedicalHistoryForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_medical_history_form"
@@ -406,3 +405,63 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             "imaging_lab_access",
             "recent_hospitalization"
         ]
+from typing import Any, Text, Dict, List
+from rasa_sdk import Action, Tracker
+from rasa_sdk.executor import CollectingDispatcher
+from rasa_sdk.events import SlotSet, FollowupAction
+import jwt
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ActionGreetWithJWT(Action):
+    """Greet user and start medical history collection with JWT patient ID and gender"""
+    
+    def name(self) -> Text:
+        return "action_greet_with_jwt"
+    
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        
+        patient_id = tracker.get_slot("patient_id")
+        gender = tracker.get_slot("gender")
+
+        if not patient_id:
+            try:
+                metadata = tracker.latest_message.get('metadata', {})
+                jwt_token = metadata.get('jwt_token') or metadata.get('authorization')
+
+                if jwt_token and jwt_token.startswith('Bearer '):
+                    jwt_token = jwt_token[7:]
+
+                if jwt_token:
+                    decoded_token = jwt.decode(
+                        jwt_token,
+                        options={"verify_signature": False}
+                    )
+
+                    patient_id = decoded_token.get('sub')
+                    gender = decoded_token.get('gender')  
+
+                    if patient_id:
+                        logger.info(f"Extracted patient_id: {patient_id}, gender: {gender}")
+                        dispatcher.utter_message(response="utter_intro")
+                        return [
+                            SlotSet("patient_id", patient_id),
+                            SlotSet("gender", gender),  
+                            FollowupAction("action_check_patient_data")
+                        ]
+            except Exception as e:
+                logger.error(f"JWT extraction failed during greeting: {e}")
+
+        elif patient_id:
+            # Patient ID already set
+            dispatcher.utter_message(response="utter_intro")
+            return [FollowupAction("action_check_patient_data")]
+
+        # If extraction failed
+        dispatcher.utter_message(
+            text="Sorry, I couldn't verify your identity. Please make sure you accessed this chat through the proper link with a valid authentication token."
+        )
+        return []

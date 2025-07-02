@@ -2,42 +2,40 @@ version: "3.1"
 
 rules:
 
-- rule: Ask for patient ID on greeting
-  steps:
-    - intent: greet
-    - action: utter_ask_patient_id
 
-- rule: Handle patient ID input
-  steps:
-    - intent: id
-    - action: action_check_patient_data
+  # Greeting rule - use JWT-aware greeting action
+  - rule: Greet with JWT extraction
+    steps:
+      - intent: greet
+      - action: action_greet_with_jwt
 
-- rule: Submit medical form and summarize
-  condition:
-    - active_loop: medical_history_form
-  steps:
-    - action: medical_history_form
-    - active_loop: null
-    - action: action_summary
+  # Submit medical form and summarize
+  - rule: Submit medical form and summarize
+    condition:
+      - active_loop: medical_history_form
+    steps:
+      - action: medical_history_form
+      - active_loop: null
+      - action: action_summary
 
-- rule: Ask if user wants to change data
-  steps:
-    - intent: affirm
-    - action: action_correct_slot
+  # Ask if user wants to change data
+  - rule: Ask if user wants to change data
+    steps:
+      - intent: affirm
+      - action: action_correct_slot
 
-- rule: Handle correction choice
-  steps:
-    - intent: inform
-    - action: action_correct_slot
+  # Handle correction choice
+  - rule: Handle correction choice
+    steps:
+      - intent: inform
+      - action: action_correct_slot
 
-- rule: Finish if no corrections
-  condition:
-    - active_loop: null
-  steps:
-    - action: action_summary
-    - intent: deny
-    - action: action_save_patient_data
-
-
-
+  # Finish if no corrections
+  - rule: Finish if no corrections
+    condition:
+      - active_loop: null
+    steps:
+      - action: action_summary
+      - intent: deny
+      - action: action_save_patient_data
 

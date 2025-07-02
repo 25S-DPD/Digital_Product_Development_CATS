@@ -1,20 +1,21 @@
 version: "3.1"
 
 intents:
-  - id
   - greet
   - affirm
   - deny
   - inform
   - correct_data
   - used_to_smoke
-  - upload_files  # New intent for file uploads
-  - no_results    # New intent for no test results
-  - upload_more_files  # New intent for uploading more files
-  - no_more_files      # New intent for no more files
+  - upload_files
+  - no_results
+  - upload_more_files
+  - no_more_files
+
 
 entities:
   - patient_id
+  - gender
   - chronic_disease
   - smoking_info
   - medicine_info
@@ -28,7 +29,7 @@ entities:
   - recent_exams
   - imaging_lab_access
   - recent_hospitalization
-  - file_info  # New entity for file information
+  - file_info
 
 slots:
   patient_id:
@@ -36,6 +37,11 @@ slots:
     mappings:
       - type: from_entity
         entity: patient_id
+  gender:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: gender
 
   chronic_disease:
     type: text
@@ -173,7 +179,6 @@ slots:
           - active_loop: medical_history_form
             requested_slot: recent_exams
 
-
   imaging_lab_access:
     type: text
     mappings:
@@ -210,18 +215,16 @@ forms:
       - recent_hospitalization
 
 responses:
-  utter_ask_patient_id:
-    - text: "Hello! Please enter your patient ID to begin."
 
   utter_intro:
     - text: |
-        Hello, I am here to help you do your medical history. If you type something wrong you will have a chance to fix it at the end.
+        Hello! I am here to help you complete your medical history. If you type something wrong, you will have a chance to fix it at the end.
 
   utter_ask_chronic_disease:
-    - text: "1) Do you have any chronic disease?"
+    - text: "Do you have any chronic disease?"
 
   utter_ask_smoking_info:
-    - text: "2) Do you smoke?"
+    - text: "Do you smoke?"
       buttons:
         - title: "Yes"
           payload: "Yes"
@@ -257,64 +260,46 @@ responses:
           payload: "20+"
 
   utter_ask_medicine_info:
-    - text: "3) Do you use any continuous-use medication? If yes, list which one(s), the dosage and for what purpose?"
+    - text: "Do you use any continuous-use medication? If yes, list which one(s), the dosage and for what purpose?"
 
   utter_ask_hospital_info:
-    - text: "4) Have you ever been hospitalized or had surgery? When and for what reason?"
+    - text: "Have you ever been hospitalized or had surgery? When and for what reason?"
 
   utter_ask_allergies_info:
-    - text: "5) Do you have any allergies to medications, foods, or other substances?"
+    - text: "Do you have any allergies to medications, foods, or other substances?"
 
   utter_ask_hereditary_disease:
-    - text: "6) Does anyone in your family have any serious or hereditary diseases? (e.g., cancer, heart disease)"
+    - text: "Does anyone in your family have any serious or hereditary diseases? (e.g., cancer, heart disease)"
 
   utter_ask_alcohol_info:
-    - text: "7) Do you drink alcohol? If yes, how often?"
+    - text: "Do you drink alcohol? If yes, how often?"
 
   utter_ask_drug_use:
-    - text: "8) Have you used any other drugs? (e.g., marijuana, cocaine, crack)"
+    - text: "Have you used any other drugs? (e.g., marijuana, cocaine, crack)"
 
   utter_ask_sleep_diet:
-    - text: "9) How are your eating habits and sleep? Do you sleep well?"
+    - text: "How are your eating habits and sleep? Do you sleep well?"
 
   utter_ask_pregnancy_history:
-    - text: "10) (If female) Have you ever been pregnant? How were the pregnancies and deliveries?"
+    - text: "Have you ever been pregnant? How were the pregnancies and deliveries?"
 
   utter_ask_recent_exams:
-      - text: "11) Please upload scanned or readable photos of your most recent test results. If you had imaging exams (like CT scan, MRI, ultrasound, etc.), include that information too. You can upload more than one file!"
-        buttons:
-          - title: "I don't have test results"
-            payload: "no_results"
-          - title: "Upload Files"
-            payload: "upload_files"
+    - text: "Please upload scanned or readable photos of your most recent test results. If you had imaging exams (like CT scan, MRI, ultrasound, etc.), include that information too. You can upload more than one file!"
+      buttons:
+        - title: "I don't have test results"
+          payload: "no_results"
+        - title: "Upload Files"
+          payload: "upload_files"
 
   utter_ask_imaging_lab_access:
-    - text: "12) What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.)"
+    - text: "What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.)"
 
   utter_ask_recent_hospitalization:
-    - text: "13) Have you been hospitalized recently? If so, please upload the hospital discharge summary (photo or PDF)."
-
-  utter_summary:
-    - text: |
-        Here's what I've collected:
-        Chronic Disease: {chronic_disease}
-        Smoking: {smoking_info}
-        Medicine Info: {medicine_info}
-        Hospital Info: {hospital_info}
-        Allergies Info: {allergies_info}
-        Hereditary Disease: {hereditary_disease}
-        Alcohol Info: {alcohol_info}
-        Drug Use: {drug_use}
-        Sleep and Diet: {sleep_diet}
-        Pregnancy History: {pregnancy_history}
-        Recent Exams: {recent_exams}
-        Imaging Lab Access: {imaging_lab_access}
-        Recent Hospitalization: {recent_hospitalization}
-
-        Do you want to change anything? (yes/no)
+    - text: "Have you been hospitalized recently? If so, please upload the hospital discharge summary (photo or PDF)."
 
   utter_goodbye:
-    - text: "Thank you! Your medical history has been recorded."
+    - text: "Thank you! Your medical history has been recorded successfully."
+
 
   utter_ask_which_to_change:
     - text: |
@@ -339,3 +324,5 @@ actions:
   - action_check_patient_data
   - action_save_patient_data
   - validate_medical_history_form
+  - action_greet_with_jwt
+ 
