@@ -39,3 +39,10 @@ rules:
       - intent: deny
       - action: action_save_patient_data
 
+  - rule: Handle lab collection responses
+    condition:
+      - slot_was_set:
+        - collecting_lab_info: true
+    steps:
+      - action: action_handle_imaging_lab_response
+

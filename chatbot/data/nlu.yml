@@ -3,13 +3,6 @@ version: "3.1"
 
 
 nlu:
-- intent: id
-  examples: |
-    - My patient ID is [12](patient_id)
-    - It's [12345](patient_id)
-    - The ID is [A001](patient_id)
-
-
 - intent: greet
   examples: |
     - hello

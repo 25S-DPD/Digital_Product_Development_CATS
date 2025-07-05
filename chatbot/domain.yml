@@ -14,8 +14,6 @@ intents:
 
 
 entities:
-  - patient_id
-  - gender
   - chronic_disease
   - smoking_info
   - medicine_info
@@ -34,14 +32,24 @@ entities:
 slots:
   patient_id:
     type: text
-    mappings:
-      - type: from_entity
-        entity: patient_id
+    mappings: []
+    influence_conversation: false
+    
   gender:
     type: text
-    mappings:
-      - type: from_entity
-        entity: gender
+    mappings: []
+    influence_conversation: false
+    
+  token:
+    type: text
+    mappings: []
+    influence_conversation: false
+
+  recent_hospitalization_status:
+    type: bool
+    mappings: []
+    influence_conversation: false
+
 
   chronic_disease:
     type: text
@@ -186,6 +194,63 @@ slots:
         conditions:
           - active_loop: medical_history_form
             requested_slot: imaging_lab_access
+  
+  exams_passwords:
+    type: any
+    initial_value: {}
+    mappings:
+      - type: custom
+
+  imaging_lab_wants_to_share:
+    type: bool
+    mappings:
+      - type: custom
+
+  current_lab_url:
+    type: text
+    mappings:
+      - type: custom
+
+  current_lab_password:
+    type: text
+    mappings:
+      - type: custom
+
+  add_more_labs:
+    type: bool
+    mappings:
+      - type: custom
+
+  collecting_lab_info:
+    type: bool
+    initial_value: false
+    mappings:
+      - type: custom
+
+  collect_lab_url:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: collect_lab_url
+
+  collect_lab_password:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: collect_lab_password
+
+  collect_add_more:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: collect_add_more
+
 
   recent_hospitalization:
     type: text
@@ -213,6 +278,9 @@ forms:
       - recent_exams
       - imaging_lab_access
       - recent_hospitalization
+      - collect_add_more
+      - collect_lab_password
+      - collect_lab_url
 
 responses:
 
@@ -292,11 +360,47 @@ responses:
           payload: "upload_files"
 
   utter_ask_imaging_lab_access:
-    - text: "What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.)"
+    - text: "What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.). If you do not want to share, click on No button but have them ready for the appointment."
+      buttons:
+        - title: "Yes, I want to share"
+          payload: "/affirm"
+        - title: "No"
+          payload: "/deny"
 
+  utter_ask_imaging_lab_wants_to_share:
+    - text: "Do you want to share your imaging lab access credentials?"
+      buttons:
+        - title: "Yes"
+          payload: "/affirm"
+        - title: "No"
+          payload: "/deny"
+
+  utter_ask_current_lab_url:
+    - text: "Please provide the website URL of the imaging lab (e.g., www.example.com):"
+
+  utter_ask_current_lab_password:
+    - text: "Please provide the password for this lab:"
+
+  utter_ask_add_more_labs:
+    - text: "Do you want to add another imaging lab?"
+      buttons:
+        - title: "Yes"
+          payload: "/affirm"
+        - title: "No"
+          payload: "/deny"
+
+  utter_labs_saved:
+    - text: "Thank you! Your imaging lab credentials have been saved."
+
+  utter_no_labs_shared:
+    - text: "Understood. Please have your imaging lab credentials ready for your appointment."
   utter_ask_recent_hospitalization:
-    - text: "Have you been hospitalized recently? If so, please upload the hospital discharge summary (photo or PDF)."
-
+    - text: "Have you been hospitalized recently?"
+      buttons:
+        - title: "Yes"
+          payload: "Yes"
+        - title: "No"
+          payload: "No"
   utter_goodbye:
     - text: "Thank you! Your medical history has been recorded successfully."
 
@@ -325,4 +429,9 @@ actions:
   - action_save_patient_data
   - validate_medical_history_form
   - action_greet_with_jwt
+  - action_handle_imaging_lab_response
+  - action_collect_lab_url
+  - action_collect_lab_password
+  - action_handle_add_more_labs
+
  
