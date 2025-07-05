@@ -11,7 +11,8 @@ intents:
   - no_results
   - upload_more_files
   - no_more_files
-
+  - add_more_credentials  # New intent for adding more lab credentials
+  - done_adding_credentials  # New intent to finish adding credentials
 
 entities:
   - chronic_disease
@@ -26,8 +27,9 @@ entities:
   - pregnancy_history
   - recent_exams
   - imaging_lab_access
-  - recent_hospitalization
   - file_info
+  - lab_url  # New entity for lab URLs
+  - lab_password  # New entity for lab passwords
 
 slots:
   patient_id:
@@ -50,7 +52,82 @@ slots:
     mappings: []
     influence_conversation: false
 
+  # New slots for imaging lab credentials collection
+  imaging_lab_access:
+    type: text
+    mappings:
+      - type: from_intent
+        intent: affirm
+        value: "yes"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: imaging_lab_access
+      - type: from_intent
+        intent: deny
+        value: "no"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: imaging_lab_access
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: imaging_lab_access
 
+  lab_credentials_status:
+    type: text
+    mappings:
+      # Add mapping for handling the "more credentials" decision
+      - type: from_intent
+        intent: add_more_credentials
+        value: "collecting"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: lab_credentials_status
+      - type: from_intent
+        intent: done_adding_credentials
+        value: "completed"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: lab_credentials_status
+      - type: from_intent
+        intent: affirm
+        value: "collecting"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: lab_credentials_status
+      - type: from_intent
+        intent: deny
+        value: "completed"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: lab_credentials_status
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: lab_credentials_status
+    influence_conversation: false
+
+  current_lab_url:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: current_lab_url
+
+  current_lab_password:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: current_lab_password
+
+  exam_passwords:
+    type: any
+    mappings: []
+    influence_conversation: false
+  # Other existing slots remain the same
   chronic_disease:
     type: text
     mappings:
@@ -186,72 +263,7 @@ slots:
         conditions:
           - active_loop: medical_history_form
             requested_slot: recent_exams
-
-  imaging_lab_access:
-    type: text
-    mappings:
-      - type: from_text
-        conditions:
-          - active_loop: medical_history_form
-            requested_slot: imaging_lab_access
   
-  exams_passwords:
-    type: any
-    initial_value: {}
-    mappings:
-      - type: custom
-
-  imaging_lab_wants_to_share:
-    type: bool
-    mappings:
-      - type: custom
-
-  current_lab_url:
-    type: text
-    mappings:
-      - type: custom
-
-  current_lab_password:
-    type: text
-    mappings:
-      - type: custom
-
-  add_more_labs:
-    type: bool
-    mappings:
-      - type: custom
-
-  collecting_lab_info:
-    type: bool
-    initial_value: false
-    mappings:
-      - type: custom
-
-  collect_lab_url:
-    type: text
-    mappings:
-      - type: from_text
-        conditions:
-          - active_loop: medical_history_form
-            requested_slot: collect_lab_url
-
-  collect_lab_password:
-    type: text
-    mappings:
-      - type: from_text
-        conditions:
-          - active_loop: medical_history_form
-            requested_slot: collect_lab_password
-
-  collect_add_more:
-    type: text
-    mappings:
-      - type: from_text
-        conditions:
-          - active_loop: medical_history_form
-            requested_slot: collect_add_more
-
-
   recent_hospitalization:
     type: text
     mappings:
@@ -278,12 +290,12 @@ forms:
       - recent_exams
       - imaging_lab_access
       - recent_hospitalization
-      - collect_add_more
-      - collect_lab_password
-      - collect_lab_url
+      - current_lab_password
+      - current_lab_url
+      - lab_credentials_status
+    
 
 responses:
-
   utter_intro:
     - text: |
         Hello! I am here to help you complete your medical history. If you type something wrong, you will have a chance to fix it at the end.
@@ -367,33 +379,20 @@ responses:
         - title: "No"
           payload: "/deny"
 
-  utter_ask_imaging_lab_wants_to_share:
-    - text: "Do you want to share your imaging lab access credentials?"
-      buttons:
-        - title: "Yes"
-          payload: "/affirm"
-        - title: "No"
-          payload: "/deny"
-
   utter_ask_current_lab_url:
-    - text: "Please provide the website URL of the imaging lab (e.g., www.example.com):"
+    - text: "Please enter the website URL of the lab:"
 
   utter_ask_current_lab_password:
-    - text: "Please provide the password for this lab:"
+    - text: "Please enter the password for this lab:"
 
-  utter_ask_add_more_labs:
-    - text: "Do you want to add another imaging lab?"
+  utter_ask_lab_credentials_status:
+    - text: "Do you have credentials for another lab?"
       buttons:
-        - title: "Yes"
-          payload: "/affirm"
-        - title: "No"
-          payload: "/deny"
+        - title: "Yes, add another"
+          payload: "/add_more_credentials"
+        - title: "No, I'm done"
+          payload: "/done_adding_credentials"
 
-  utter_labs_saved:
-    - text: "Thank you! Your imaging lab credentials have been saved."
-
-  utter_no_labs_shared:
-    - text: "Understood. Please have your imaging lab credentials ready for your appointment."
   utter_ask_recent_hospitalization:
     - text: "Have you been hospitalized recently?"
       buttons:
@@ -401,9 +400,9 @@ responses:
           payload: "Yes"
         - title: "No"
           payload: "No"
+
   utter_goodbye:
     - text: "Thank you! Your medical history has been recorded successfully."
-
 
   utter_ask_which_to_change:
     - text: |
@@ -429,9 +428,3 @@ actions:
   - action_save_patient_data
   - validate_medical_history_form
   - action_greet_with_jwt
-  - action_handle_imaging_lab_response
-  - action_collect_lab_url
-  - action_collect_lab_password
-  - action_handle_add_more_labs
-
- 

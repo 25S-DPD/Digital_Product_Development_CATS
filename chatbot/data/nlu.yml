@@ -103,3 +103,17 @@ nlu:
     - no other files
     - I don't have more files
     - done
+- intent: add_more_credentials
+  examples: |
+    - add more
+    - another one
+    - I have more
+    - add another lab
+
+- intent: done_adding_credentials
+  examples: |
+    - done
+    - finished
+    - no more
+    - that's all
+    - complete
