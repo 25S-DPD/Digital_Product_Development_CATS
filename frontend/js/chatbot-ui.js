@@ -43,7 +43,7 @@ function init() {
 		<div class='chat-area'>
             <div class='bot-msg'>
                 <img class='bot-img' src ='${botLogoPath}' />
-				<span class='msg'>Are you ready to start your medical history assessment?</span>
+				<span class='msg'>Are you ready to start your medical history assessment? Make sure to have all your medicines and exams with you.</span>
 			</div>
 			<div class='bot-msg'>
 				<img class='bot-img' src ='${botLogoPath}' />

@@ -28,6 +28,7 @@ entities:
   - recent_exams
   - imaging_lab_access
   - file_info
+  - lab_username 
   - lab_url  # New entity for lab URLs
   - lab_password  # New entity for lab passwords
 
@@ -122,6 +123,14 @@ slots:
         conditions:
           - active_loop: medical_history_form
             requested_slot: current_lab_password
+
+  current_lab_username:
+    type: text
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: current_lab_username
 
   exam_passwords:
     type: any
@@ -291,6 +300,7 @@ forms:
       - imaging_lab_access
       - recent_hospitalization
       - current_lab_password
+      - current_lab_username
       - current_lab_url
       - lab_credentials_status
     
@@ -372,7 +382,7 @@ responses:
           payload: "upload_files"
 
   utter_ask_imaging_lab_access:
-    - text: "What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.). If you do not want to share, click on No button but have them ready for the appointment."
+    - text: "What are the login credentials and the website of the lab where you had your imaging exams? (So the doctor can view the images.). THis is important so the doctor can have access to your full personal data. We ensure that this data is not being used for any other purpose. If you do not want to share, click on No button but have them ready for the appointment."
       buttons:
         - title: "Yes, I want to share"
           payload: "/affirm"
@@ -381,6 +391,9 @@ responses:
 
   utter_ask_current_lab_url:
     - text: "Please enter the website URL of the lab:"
+
+  utter_ask_current_lab_username:
+    - text: "Please enter the username for this lab:"
 
   utter_ask_current_lab_password:
     - text: "Please enter the password for this lab:"

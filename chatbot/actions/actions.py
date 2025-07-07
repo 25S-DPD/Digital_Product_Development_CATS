@@ -422,26 +422,41 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             return {"imaging_lab_access": None}
 
     async def validate_current_lab_url(
+            self,
+            slot_value: Any,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: DomainDict,
+        ) -> Dict[Text, Any]:
+            """Validate lab URL input."""
+            
+            if slot_value:
+                # Basic URL validation
+                if not slot_value.startswith(('http://', 'https://', 'www.')):
+                    # Add protocol if missing
+                    if not slot_value.startswith('www.'):
+                        slot_value = 'www.' + slot_value
+                    slot_value = 'https://' + slot_value
+                
+                return {"current_lab_url": slot_value}
+            else:
+                dispatcher.utter_message(text="Please enter a valid URL.")
+                return {"current_lab_url": None}
+
+    async def validate_current_lab_username(
         self,
         slot_value: Any,
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: DomainDict,
     ) -> Dict[Text, Any]:
-        """Validate lab URL input."""
+        """Validate lab username input."""
         
-        if slot_value:
-            # Basic URL validation
-            if not slot_value.startswith(('http://', 'https://', 'www.')):
-                # Add protocol if missing
-                if not slot_value.startswith('www.'):
-                    slot_value = 'www.' + slot_value
-                slot_value = 'https://' + slot_value
-            
-            return {"current_lab_url": slot_value}
+        if slot_value and slot_value.strip():
+            return {"current_lab_username": slot_value.strip()}
         else:
-            dispatcher.utter_message(text="Please enter a valid URL.")
-            return {"current_lab_url": None}
+            dispatcher.utter_message(text="Please enter a valid username.")
+            return {"current_lab_username": None}
 
     async def validate_current_lab_password(
         self,
@@ -455,7 +470,13 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         if slot_value:
             current_credentials = tracker.get_slot("exam_passwords") or {}
             current_url = tracker.get_slot("current_lab_url")
-            current_credentials[current_url] = slot_value
+            current_username = tracker.get_slot("current_lab_username")
+            
+            # Store credentials as a nested dictionary with URL as key
+            current_credentials[current_url] = {
+                "username": current_username,
+                "password": slot_value
+            }
 
             # After storing credentials, reset the status to trigger the "add more" question
             return {
@@ -466,7 +487,6 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         else:
             dispatcher.utter_message(text="Please enter a password.")
             return {"current_lab_password": None}
-
     async def validate_lab_credentials_status(
         self,
         slot_value: Any,
@@ -482,6 +502,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             return {
                 "lab_credentials_status": "collecting",
                 "current_lab_url": None,
+                "current_lab_username": None,
                 "current_lab_password": None,
             }
         elif intent in ["deny", "done_adding_credentials"]:
@@ -495,6 +516,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             return {
                 "lab_credentials_status": "collecting",
                 "current_lab_url": None,
+                "current_lab_username": None,
                 "current_lab_password": None,
             }
         elif any(w in text for w in ["no", "done", "finish", "complete"]):
@@ -504,6 +526,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
 
         dispatcher.utter_message(text="Please answer Yes or No.")
         return {"lab_credentials_status": None}
+
 
     async def validate_recent_hospitalization(
         self,
@@ -555,6 +578,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         lab_credentials_status = tracker.get_slot("lab_credentials_status")
         current_lab_url = tracker.get_slot("current_lab_url")
         current_lab_password = tracker.get_slot("current_lab_password")
+        current_lab_username = tracker.get_slot("current_lab_username")
         imaging_lab_access = tracker.get_slot("imaging_lab_access")
         
         # Handle imaging lab credentials collection logic
@@ -563,6 +587,8 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             if lab_credentials_status == "collecting" or lab_credentials_status is None:
                 if current_lab_url is None:
                     return "current_lab_url"
+                elif current_lab_username is None:
+                    return "current_lab_username"
                 elif current_lab_password is None:
                     return "current_lab_password"
                 elif lab_credentials_status is None:
@@ -577,7 +603,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         
         # If lab credentials are completed, skip credential-related slots
         if lab_credentials_status == "completed":
-            if next_slot in ["current_lab_url", "current_lab_password", "lab_credentials_status"]:
+            if next_slot in ["current_lab_url","current_lab_username", "current_lab_password", "lab_credentials_status"]:
                 # Move to the next main slot
                 return "recent_hospitalization"
         
@@ -661,8 +687,9 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             try:
                 imaging_index = base_slots.index("imaging_lab_access")
                 base_slots.insert(imaging_index + 1, "current_lab_url")
-                base_slots.insert(imaging_index + 2, "current_lab_password")
-                base_slots.insert(imaging_index + 3, "lab_credentials_status")
+                base_slots.insert(imaging_index + 2, "current_lab_username")
+                base_slots.insert(imaging_index + 3, "current_lab_password")
+                base_slots.insert(imaging_index + 4, "lab_credentials_status")
             except ValueError:
                 pass
 
