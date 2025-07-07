@@ -1,15 +1,14 @@
-from typing import Any, Text, Dict, List
+from typing import Any, Text, Dict, List, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 from rasa_sdk.events import SlotSet, ActiveLoop, FollowupAction
-import psycopg2
-
-from dotenv import load_dotenv
-import os
 import requests
-from typing import Dict, Any
-
+from rasa_sdk.forms import FormValidationAction
+from rasa_sdk.types import DomainDict
+from typing import Any, Text, Dict, List
+import jwt
+import logging
 
 class ActionSummary(Action):
     def name(self) -> Text:
@@ -67,7 +66,6 @@ class ActionSummary(Action):
 
 
 
-import sqlite3
 
 class ActionSavePatientData(Action):
     def name(self) -> Text:
@@ -108,7 +106,7 @@ class ActionSavePatientData(Action):
     
     def save_to_database(self, patient_id: str, data: Dict[str, Any]):
         print(f"Saving data for patient {patient_id} to the database...")
-        # TODO add the token in the pot requests
+        
         url = f"https://redcore-latest.onrender.com/patients/{patient_id}/pre-anamnesis"
         headers = {
             "Authorization": f"Bearer {self.token}",
@@ -119,11 +117,11 @@ class ActionSavePatientData(Action):
             "chronic_disease": data.get("chronic_disease"),
             "smoking": data.get("smoking_info"),
             "medicines": data.get("medicine_info"),
-            #"hospital_history": data.get("hospital_info"), # column to be created in the database
+            "hospital_history": data.get("hospital_info"), # column to be created in the database
             "allergies": data.get("allergies_info"),
             "existing_illness": data.get("hereditary_disease"),
             "alcohol_drug_use": data.get("alcohol_info"),
-            #"drug_use": data.get("drug_use"), # column to be created in the database
+            "drug_use": data.get("drug_use"), # column to be created in the database
             "sleep_diet": data.get("sleep_diet"),
             "pregnancy_history": data.get("pregnancy_history"),
             #"recent_exams": data.get("recent_exams"), # i need to upate this
@@ -143,10 +141,7 @@ class ActionSavePatientData(Action):
         except requests.RequestException as e:
             print(f"Error during POST request: {e}")
 
-from rasa_sdk import Action, Tracker
-from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet, ActiveLoop, FollowupAction
-from typing import Text, List, Dict, Any
+
 
 class ActionCorrectSlot(Action):
     def name(self) -> Text:
@@ -197,8 +192,7 @@ class ActionCorrectSlot(Action):
             return []
 
 
-from rasa_sdk.events import SlotSet, FollowupAction
-import sqlite3  # or any DB you're using
+
 
 class ActionCheckPatientData(Action):
     def name(self) -> Text:
@@ -256,12 +250,12 @@ class ActionCheckPatientData(Action):
                     "smoking_info": data.get("smoking"),
                     "medicine_info": data.get("medicines"),
                     # TODO add hospital_info to database
-                    #"hospital_info": data.get("hospital_history"),
+                    "hospital_info": data.get("hospital_history"),
                     "allergies_info": data.get("allergies"),
                     "hereditary_disease": data.get("existing_illness"),
                     "alcohol_info": data.get("alcohol_drug_use"),
                     # TODO add drug_use to database
-                    #"drug_use": data.get("drug_use"),
+                    "drug_use": data.get("drug_use"),
                     "sleep_diet": data.get("sleep_diet"),
                     "pregnancy_history": data.get("pregnancy_history"),
                     "recent_exams": data.get("recent_exams"),
@@ -285,11 +279,7 @@ class ActionCheckPatientData(Action):
         except requests.RequestException as e:
             dispatcher.utter_message(text="Sorry, there was an error accessing your medical history. Please try again later.")
             return []
-from typing import Dict, Text, Any, List, Optional
-from rasa_sdk import Action, Tracker
-from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.forms import FormValidationAction
-from rasa_sdk.types import DomainDict
+
 class ValidateMedicalHistoryForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_medical_history_form"
@@ -703,12 +693,7 @@ class ValidateMedicalHistoryForm(FormValidationAction):
             "exams_passwords": credentials_dict
         }
 
-from typing import Any, Text, Dict, List
-from rasa_sdk import Action, Tracker
-from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet, FollowupAction
-import jwt
-import logging
+
 
 logger = logging.getLogger(__name__)
 

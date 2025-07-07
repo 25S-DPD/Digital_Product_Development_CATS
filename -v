@@ -1,0 +1,1 @@
+{"error":true,"error_type":"bad_request","message":"Bad request: Invalid multipart data: No Content-Type header found"}
