@@ -40,8 +40,8 @@
 #  username: username
 #  password: password
 #  queue: queue
-action_endpoint:
-  url: "http://localhost:5055/webhook"
+#action_endpoint:
+  #url: "http://localhost:5055/webhook"
 
 
 ## docker
@@ -56,11 +56,11 @@ action_endpoint:
 
 ## render
 
-# action_endpoint:
-#   url: "http://91.99.232.111:5055/webhook"
-#   headers:
-#     Content-Type: application/json
-#   cors:
-#     - "http://91.99.232.111:3000"
+action_endpoint:
+   url: "http://91.99.232.111:5055/webhook"
+   headers:
+     Content-Type: application/json
+   cors:
+     - "http://91.99.232.111:3000"
 
 

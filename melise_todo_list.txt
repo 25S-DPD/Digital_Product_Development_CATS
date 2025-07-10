@@ -1,4 +1,3 @@
-return the questions when passenger types instead of buttons clicking
-id from token 
-gender question from token
-fx the correct data for exams
+- adicionar arquivo 
+- pergunta remedio 
+- arrumar o edit das informacoes 

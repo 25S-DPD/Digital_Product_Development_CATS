@@ -82,8 +82,8 @@ function init() {
     fileUpload = document.querySelector("#fileUpload")
     root = document.documentElement;
     chatPopup.style.display = "none"
-    var host = "http://localhost:5005/webhooks/rest/webhook";
-    // var host = "http://91.99.232.111:5005/webhooks/rest/webhook"
+    //var host = "http://localhost:5005/webhooks/rest/webhook";
+    var host = "http://91.99.232.111:5005/webhooks/rest/webhook"
 
     // File upload event listener
     fileUpload.addEventListener('change', handleFileUpload);

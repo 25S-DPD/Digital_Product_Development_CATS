@@ -173,7 +173,6 @@
 }
 
 .bot-title::before {
-    content: '🤖';
     margin-right: var(--spacing-sm);
     font-size: var(--font-size-xl);
 }

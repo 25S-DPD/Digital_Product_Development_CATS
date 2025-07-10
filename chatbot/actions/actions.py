@@ -152,9 +152,14 @@ class ActionCorrectSlot(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
         last_user_msg = tracker.latest_message.get("text", "").strip().lower()
+        print(f"Last user message: {last_user_msg}")
+        
+        # Complete slot reset map including all slots from your domain.yml
         slot_reset_map = {
             "chronic_disease": "chronic_disease",
             "smoking_info": "smoking_info",
+            "smoking_duration": "smoking_duration",  # Missing slot
+            "smoking_frequency": "smoking_frequency",  # Missing slot
             "medicine_info": "medicine_info",
             "hospital_info": "hospital_info",
             "allergies_info": "allergies_info",
@@ -165,25 +170,65 @@ class ActionCorrectSlot(Action):
             "pregnancy_history": "pregnancy_history",
             "recent_exams": "recent_exams",
             "imaging_lab_access": "imaging_lab_access",
-            "recent_hospitalization": "recent_hospitalization"
+            "recent_hospitalization": "recent_hospitalization",
+            "current_lab_url": "current_lab_url",  # Missing slot
+            "current_lab_username": "current_lab_username",  # Missing slot
+            "current_lab_password": "current_lab_password",  # Missing slot
+            "lab_credentials_status": "lab_credentials_status",  # Missing slot
         }
 
+        # Check if user input matches any slot name
         if last_user_msg in slot_reset_map:
             slot_to_reset = slot_reset_map[last_user_msg]
-            return [
-                SlotSet(slot_to_reset, None),
+            
+            # Get current slot value to show what they previously answered
+            current_value = tracker.get_slot(slot_to_reset)
+            print(f"Current value for {slot_to_reset}: {current_value}")
+            
+            # Reset related slots based on dependencies
+            slots_to_reset = [SlotSet(slot_to_reset, None)]
+            
+            # Handle smoking-related slot dependencies
+            if slot_to_reset == "smoking_info":
+                slots_to_reset.extend([
+                    SlotSet("smoking_duration", None),
+                    SlotSet("smoking_frequency", None)
+                ])
+            
+            # Handle lab credentials dependencies
+            if slot_to_reset == "imaging_lab_access":
+                slots_to_reset.extend([
+                    SlotSet("current_lab_url", None),
+                    SlotSet("current_lab_username", None),
+                    SlotSet("current_lab_password", None),
+                    SlotSet("lab_credentials_status", None),
+                    SlotSet("exam_passwords", None)
+                ])
+            
+            # Create message with previous answer
+            field_name = slot_to_reset.replace('_', ' ').title()
+            if current_value:
+                message = f"Your previous answer for {field_name} was: '{current_value}'\n\nI've reset this field. Let's fill it out again."
+            else:
+                message = f"I've reset the {field_name} field. Let's fill it out again."
+            
+            dispatcher.utter_message(text=message)
+            
+            return slots_to_reset + [
                 ActiveLoop("medical_history_form"),
                 FollowupAction("medical_history_form")
             ]
         else:
+            # Create buttons for all correctable fields
             buttons = []
             for slot_name in slot_reset_map.keys():
-                buttons.append(
-                    {
-                        "title": slot_name.replace("_", " ").capitalize(),
+                # Skip internal/technical slots from button display
+                if slot_name not in ["smoking_duration", "smoking_frequency", "current_lab_url", 
+                                   "current_lab_username", "current_lab_password", "lab_credentials_status"]:
+                    buttons.append({
+                        "title": slot_name.replace("_", " ").title(),
                         "payload": slot_name
-                    }
-                )
+                    })
 
             dispatcher.utter_message(
                 text="Which field would you like to correct? Please choose one of the options below:",
