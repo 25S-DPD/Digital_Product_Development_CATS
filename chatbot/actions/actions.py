@@ -67,6 +67,7 @@ class ActionSummary(Action):
 
 
 
+
 class ActionSavePatientData(Action):
     def name(self) -> Text:
         return "action_save_patient_data"
@@ -168,7 +169,7 @@ class ActionCorrectSlot(Action):
             "drug_use": "drug_use",
             "sleep_diet": "sleep_diet",
             "pregnancy_history": "pregnancy_history",
-            "recent_exams": "recent_exams",
+            #"recent_exams": "recent_exams",
             "imaging_lab_access": "imaging_lab_access",
             "recent_hospitalization": "recent_hospitalization",
             "current_lab_url": "current_lab_url",  # Missing slot
@@ -235,9 +236,7 @@ class ActionCorrectSlot(Action):
                 buttons=buttons
             )
             return []
-
-
-
+from rasa_sdk.forms import FormValidationAction
 
 class ActionCheckPatientData(Action):
     def name(self) -> Text:
@@ -574,125 +573,67 @@ class ValidateMedicalHistoryForm(FormValidationAction):
 
 
     async def validate_recent_hospitalization(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        """Validate recent_hospitalization value."""
-        
-        # Handle both button payloads and direct text input
-        if slot_value in ["yes", "no"] or tracker.latest_message.get('intent', {}).get('name') in ['affirm', 'deny']:
-            # Map intent to text values
-            if tracker.latest_message.get('intent', {}).get('name') == 'deny' or slot_value == "no":
-                text_value = "No"
-                status_value = False
-            elif tracker.latest_message.get('intent', {}).get('name') == 'affirm' or slot_value == "yes":
-                text_value = "Yes"
-                status_value = True
-            else:
-                # Handle direct text input
-                if slot_value and slot_value.lower() in ['yes', 'y', 'true', '1']:
+            self,
+            slot_value: Any,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: DomainDict,
+        ) -> Dict[Text, Any]:
+            """Validate recent_hospitalization value."""
+            
+            # Get the latest message intent
+            latest_intent = tracker.latest_message.get('intent', {}).get('name')
+            
+            # Handle button payloads (direct slot values)
+            if slot_value in ["yes", "no"]:
+                if slot_value == "yes":
                     text_value = "Yes"
                     status_value = True
-                elif slot_value and slot_value.lower() in ['no', 'n', 'false', '0']:
+                else:  # slot_value == "no"
+                    text_value = "No"
+                    status_value = False
+                    
+                return {
+                    "recent_hospitalization": text_value,
+                    "recent_hospitalization_status": status_value
+                }
+            
+            # Handle intent-based responses (when user types or speaks)
+            elif latest_intent in ['affirm', 'deny']:
+                if latest_intent == 'affirm':
+                    text_value = "Yes"
+                    status_value = True
+                else:  # latest_intent == 'deny'
+                    text_value = "No"
+                    status_value = False
+                    
+                return {
+                    "recent_hospitalization": text_value,
+                    "recent_hospitalization_status": status_value
+                }
+            
+            # Handle direct text input
+            elif slot_value and isinstance(slot_value, str):
+                if slot_value.lower() in ['yes', 'y', 'true', '1']:
+                    text_value = "Yes"
+                    status_value = True
+                elif slot_value.lower() in ['no', 'n', 'false', '0']:
                     text_value = "No"
                     status_value = False
                 else:
                     dispatcher.utter_message(text="Please answer Yes or No.")
                     return {"recent_hospitalization": None}
+                    
+                return {
+                    "recent_hospitalization": text_value,
+                    "recent_hospitalization_status": status_value
+                }
             
-            return {
-                "recent_hospitalization": text_value,
-                "recent_hospitalization_status": status_value
-            }
-        else:
-            dispatcher.utter_message(text="Please select Yes or No.")
-            return {"recent_hospitalization": None}
+            # Invalid input
+            else:
+                dispatcher.utter_message(text="Please select Yes or No.")
+                return {"recent_hospitalization": None}
 
-    async def next_slot_to_request(
-        self,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Optional[Text]:
-        """Determine the next slot to request based on conditional logic."""
-        
-        # Get current slot values
-        lab_credentials_status = tracker.get_slot("lab_credentials_status")
-        current_lab_url = tracker.get_slot("current_lab_url")
-        current_lab_password = tracker.get_slot("current_lab_password")
-        current_lab_username = tracker.get_slot("current_lab_username")
-        imaging_lab_access = tracker.get_slot("imaging_lab_access")
-        
-        # Handle imaging lab credentials collection logic
-        if imaging_lab_access == "Yes":
-            # If we're collecting credentials or status is None (just finished collecting password)
-            if lab_credentials_status == "collecting" or lab_credentials_status is None:
-                if current_lab_url is None:
-                    return "current_lab_url"
-                elif current_lab_username is None:
-                    return "current_lab_username"
-                elif current_lab_password is None:
-                    return "current_lab_password"
-                elif lab_credentials_status is None:
-                    # Just finished collecting password, ask if they want to add more
-                    return "lab_credentials_status"
-                else:
-                    # Status is "collecting", ask if they want to add more
-                    return "lab_credentials_status"
-        
-        # Get the standard next slot
-        next_slot = await super().next_slot_to_request(dispatcher, tracker, domain)
-        
-        # If lab credentials are completed, skip credential-related slots
-        if lab_credentials_status == "completed":
-            if next_slot in ["current_lab_url","current_lab_username", "current_lab_password", "lab_credentials_status"]:
-                # Move to the next main slot
-                return "recent_hospitalization"
-        
-        # Check if smoking_info is currently "No" AND we're not in the middle of changing it
-        smoking_info = tracker.get_slot("smoking_info")
-        smoking_duration = tracker.get_slot("smoking_duration")
-        
-        if (smoking_info == "No" and 
-            smoking_duration == "N/A" and 
-            next_slot in ["smoking_duration", "smoking_frequency"]):
-            
-            # Find the next slot after smoking questions
-            required_slots = await self.required_slots(
-                domain.get("slots", {}), dispatcher, tracker, domain
-            )
-            try:
-                medicine_index = required_slots.index("medicine_info")
-                return required_slots[medicine_index]
-            except (ValueError, IndexError):
-                return None
-        
-        # Check if pregnancy_history should be skipped for males
-        gender = tracker.get_slot("gender")
-        pregnancy_history = tracker.get_slot("pregnancy_history")
-        
-        if (gender and gender.lower() in ["male", "m", "man"] and 
-            pregnancy_history == "N/A" and 
-            next_slot == "pregnancy_history"):
-            
-            # Find the next slot after pregnancy_history
-            required_slots = await self.required_slots(
-                domain.get("slots", {}), dispatcher, tracker, domain
-            )
-            try:
-                pregnancy_index = required_slots.index("pregnancy_history")
-                # Return the next slot after pregnancy_history
-                if pregnancy_index + 1 < len(required_slots):
-                    return required_slots[pregnancy_index + 1]
-                else:
-                    return None
-            except (ValueError, IndexError):
-                return None
-                
-        return next_slot
 
     async def required_slots(
         self,
@@ -741,10 +682,6 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         return base_slots
 
     def get_exam_passwords(self, tracker: Tracker) -> Dict[str, str]:
-        """
-        Get the exam passwords dictionary.
-        Use this method in your actions to get the credentials dictionary.
-        """
         
         exam_passwords = tracker.get_slot("exam_passwords")
         
@@ -754,16 +691,197 @@ class ValidateMedicalHistoryForm(FormValidationAction):
         return exam_passwords if isinstance(exam_passwords, dict) else {}
 
     def format_credentials_for_storage(self, tracker: Tracker) -> Dict[str, Any]:
-        """
-        Format the credentials for final storage in your desired structure.
-        Returns the complete structure with 'exams_passwords' key.
-        """
         
         credentials_dict = self.get_exam_passwords(tracker)
         
         return {
             "exams_passwords": credentials_dict
         }
+        
+    async def validate_recent_exams(
+            self,
+            slot_value: Any,
+            dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: DomainDict,
+        ) -> Dict[Text, Any]:
+            """Validate recent exam uploads and trigger follow-up for more uploads"""
+
+            intent = tracker.latest_message.get('intent', {}).get('name')
+            text = tracker.latest_message.get("text", "").lower()
+            
+            # Get current exam list from slot or initialize empty list
+            current_exams = tracker.get_slot("recent_exams") or []
+            if isinstance(current_exams, str):
+                # If it's a string, convert to list or handle accordingly
+                if current_exams == "No results available":
+                    current_exams = []
+                else:
+                    current_exams = [current_exams]
+
+            # Handle "no results"
+            if intent == "no_results" or "no results" in text or slot_value == "no_results":
+                return {
+                    "recent_exams": [],  # Empty list instead of string
+                    "exam_upload_status": "done"
+                }
+
+            # Handle file upload intent or uploaded files message
+            if (intent in ["upload_files", "upload_more_files"] or 
+                "uploaded files" in text or 
+                "uploaded successfully" in text or
+                slot_value in ["upload_files", "upload_more_files"]):
+                
+                # Add new upload to the list
+                if slot_value and slot_value not in ["upload_files", "upload_more_files"]:
+                    # If slot_value contains actual file info, add it to the list
+                    if isinstance(slot_value, list):
+                        current_exams.extend(slot_value)
+                    else:
+                        current_exams.append(slot_value)
+                
+                return {
+                    "recent_exams": current_exams,
+                    "exam_upload_status": None   # Force bot to ask "Do you want to upload more?"
+                }
+
+            # Handle any other text input that might indicate file upload completion
+            if any(word in text for word in ["file", "upload", "exam", "result", "test"]):
+                # If slot_value contains file information, add it to the list
+                if slot_value:
+                    if isinstance(slot_value, list):
+                        current_exams.extend(slot_value)
+                    elif slot_value not in current_exams:
+                        current_exams.append(slot_value)
+                
+                return {
+                    "recent_exams": current_exams,
+                    "exam_upload_status": None   # Force bot to ask "Do you want to upload more?"
+                }
+
+            # Fallback
+            dispatcher.utter_message(text="Please upload your exam results or choose an option.")
+            return {"recent_exams": None}
+
+    async def validate_exam_upload_status(
+        self,
+        slot_value: Any,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict,
+    ) -> Dict[Text, Any]:
+        """Determine whether user wants to upload more exam files"""
+
+        intent = tracker.latest_message.get('intent', {}).get('name')
+        text = tracker.latest_message.get("text", "").lower()
+
+        if intent in ["upload_more_files", "affirm"] or any(word in text for word in ["yes", "more", "add", "another"]):
+            return {
+                "exam_upload_status": "uploading",
+                "recent_exams": None  # Reset to allow another upload
+            }
+
+        if intent in ["no_more_files", "deny"] or any(word in text for word in ["no", "done", "finish", "complete"]):
+            return {
+                "exam_upload_status": "done"
+            }
+
+        # Handle any success message from file upload that shouldn't trigger next question
+        if "uploaded successfully" in text:
+            dispatcher.utter_message(text="Great! Do you want to upload more files?")
+            return {"exam_upload_status": None}
+
+        dispatcher.utter_message(text="Please let me know if you want to upload more files.")
+        return {"exam_upload_status": None}
+
+    async def next_slot_to_request(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict,
+    ) -> Optional[Text]:
+        """Determine the next slot to request based on conditional logic."""
+        
+        # Get current slot values
+        lab_credentials_status = tracker.get_slot("lab_credentials_status")
+        current_lab_url = tracker.get_slot("current_lab_url")
+        current_lab_password = tracker.get_slot("current_lab_password")
+        current_lab_username = tracker.get_slot("current_lab_username")
+        imaging_lab_access = tracker.get_slot("imaging_lab_access")
+
+        # ✅ Check recent_exams upload flow logic
+        exam_upload_status = tracker.get_slot("exam_upload_status")
+        recent_exams = tracker.get_slot("recent_exams")
+
+        if recent_exams in ["upload_files", "upload_more_files"] and exam_upload_status is None:
+            return "exam_upload_status"
+
+        if exam_upload_status == "uploading":
+            return "recent_exams"
+
+        # ✅ Imaging lab credential collection logic
+        if imaging_lab_access == "Yes":
+            if lab_credentials_status == "collecting" or lab_credentials_status is None:
+                if current_lab_url is None:
+                    return "current_lab_url"
+                elif current_lab_username is None:
+                    return "current_lab_username"
+                elif current_lab_password is None:
+                    return "current_lab_password"
+                elif lab_credentials_status is None:
+                    return "lab_credentials_status"
+                else:
+                    return "lab_credentials_status"
+
+        # ✅ Get the standard next slot
+        next_slot = await super().next_slot_to_request(dispatcher, tracker, domain)
+
+        # ✅ Skip credential-related slots if credentials completed
+        if lab_credentials_status == "completed":
+            if next_slot in ["current_lab_url", "current_lab_username", "current_lab_password", "lab_credentials_status"]:
+                return "recent_hospitalization"
+
+        # ✅ Skip smoking_duration/frequency if user doesn't smoke
+        smoking_info = tracker.get_slot("smoking_info")
+        smoking_duration = tracker.get_slot("smoking_duration")
+        if (
+            smoking_info == "No"
+            and smoking_duration == "N/A"
+            and next_slot in ["smoking_duration", "smoking_frequency"]
+        ):
+            required_slots = await self.required_slots(
+                domain.get("slots", {}), dispatcher, tracker, domain
+            )
+            try:
+                medicine_index = required_slots.index("medicine_info")
+                return required_slots[medicine_index]
+            except (ValueError, IndexError):
+                return None
+
+        # ✅ Skip pregnancy_history for males
+        gender = tracker.get_slot("gender")
+        pregnancy_history = tracker.get_slot("pregnancy_history")
+        if (
+            gender and gender.lower() in ["male", "m", "man"]
+            and pregnancy_history == "N/A"
+            and next_slot == "pregnancy_history"
+        ):
+            required_slots = await self.required_slots(
+                domain.get("slots", {}), dispatcher, tracker, domain
+            )
+            try:
+                pregnancy_index = required_slots.index("pregnancy_history")
+                if pregnancy_index + 1 < len(required_slots):
+                    return required_slots[pregnancy_index + 1]
+                else:
+                    return None
+            except (ValueError, IndexError):
+                return None
+
+        return next_slot
+
+
+
 
 
 

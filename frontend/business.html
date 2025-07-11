@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Praana Anamnesis Chatbot | Revolutionary Pre-Consultation Data Collection
+    </title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/business.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+  </head>
+  <body x-data="businessPage()" x-init="init()">
+    <!-- Navigation -->
+    <nav class="business-nav">
+      <div class="nav-container">
+        <a href="#" class="logo">
+          <span class="logo-text">Praana Anamnesis</span>
+        </a>
+        <div class="nav-menu" :class="{ 'active': isMenuOpen }">
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#benefits" class="nav-link">Benefits</a>
+          <a href="#how-it-works" class="nav-link">How It Works</a>
+          <a href="#pricing" class="nav-link">Pricing</a>
+          <a href="#contact" class="nav-link">Contact</a>
+          <a href="#demo" class="btn btn-primary">Request Demo</a>
+        </div>
+        <button @click="toggleMenu()" class="mobile-menu-btn">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            The World's First Dedicated
+            <span class="gradient-text">Pre-Anamnesis Chatbot</span>
+          </h1>
+          <p class="hero-subtitle">
+            Save 5-10 minutes per consultation with our revolutionary API-driven
+            solution. The only tool designed exclusively for pre-consultation
+            data collection - transparent, secure, and globally scalable.
+          </p>
+          <div class="hero-cta">
+            <a href="#demo" class="btn btn-primary btn-lg">Request Demo</a>
+            <a href="#how-it-works" class="btn btn-secondary btn-lg"
+              >Learn More</a
+            >
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-number">First</span>
+              <span class="stat-label">Dedicated Pre-Anamnesis Tool</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">Global</span>
+              <span class="stat-label">Scalability Ready</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">API</span>
+              <span class="stat-label">Native Integration</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="chatbot-preview">
+            <div class="chat-window">
+              <div class="chat-header">
+                <div class="chat-avatar">🏥</div>
+                <div class="chat-info">
+                  <span class="chat-title">Praana Medical Chatbot</span>
+                  <span class="chat-status">Ready to help</span>
+                </div>
+              </div>
+              <div class="chat-messages">
+                <div class="message bot-message">
+                  <p>
+                    Hello! I'll help collect your medical information before
+                    your appointment.
+                  </p>
+                </div>
+                <div class="message patient-message">
+                  <p>That sounds great!</p>
+                </div>
+                <div class="message bot-message typing">
+                  <p>What brings you in today?</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem/Solution Section -->
+    <section class="problem-solution">
+      <div class="container">
+        <div class="section-header">
+          <h2>A Revolutionary Approach to Healthcare Data</h2>
+          <p>
+            The first and only solution designed exclusively for pre-anamnesis
+            collection
+          </p>
+        </div>
+        <div class="problem-solution-grid">
+          <div class="problem-card">
+            <div class="card-icon">🌟</div>
+            <h3>Market First</h3>
+            <p>
+              No comparable tools exist that focus solely on pre-anamnesis
+              collection. We're pioneering this essential healthcare niche.
+            </p>
+          </div>
+          <div class="problem-card">
+            <div class="card-icon">�</div>
+            <h3>API-Native</h3>
+            <p>
+              Built from the ground up as an API-first solution, designed for
+              seamless integration into the digital health ecosystem.
+            </p>
+          </div>
+          <div class="problem-card">
+            <div class="card-icon">🌍</div>
+            <h3>Global Ready</h3>
+            <p>
+              Engineered for international expansion with simple adaptations,
+              fitting perfectly into the growing telemedicine landscape.
+            </p>
+          </div>
+        </div>
+
+        <div class="solution-highlight">
+          <div class="solution-content">
+            <h3>
+              Introducing Praana Anamnesis: The Pre-Consultation Revolution
+            </h3>
+            <p>
+              The world's first dedicated pre-anamnesis chatbot. Collect,
+              organize, and integrate patient information before appointments
+              with unmatched precision and efficiency.
+            </p>
+            <ul class="solution-benefits">
+              <li>✅ First-to-market dedicated pre-anamnesis solution</li>
+              <li>✅ API-native architecture for seamless integration</li>
+              <li>✅ Save 5-10 minutes per consultation guaranteed</li>
+              <li>✅ Built for global telemedicine expansion</li>
+              <li>✅ Zero comparable competition in this specialized niche</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="benefits" class="benefits">
+      <div class="container">
+        <div class="section-header">
+          <h2>Transform Your Practice</h2>
+          <p>
+            See immediate improvements in efficiency, patient satisfaction, and
+            data quality
+          </p>
+        </div>
+        <div class="benefits-grid">
+          <div class="benefit-card">
+            <div class="benefit-icon">🚀</div>
+            <h3>Faster Consultations</h3>
+            <p>
+              Save 5-10 minutes per appointment by having essential patient data
+              collected and organized before the visit.
+            </p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🎯</div>
+            <h3>Better Preparation</h3>
+            <p>
+              Doctors receive structured, comprehensive patient information
+              enabling more focused and effective consultations.
+            </p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🔗</div>
+            <h3>Seamless Integration</h3>
+            <p>
+              Easily integrates into existing platforms and workflows without
+              disrupting current processes.
+            </p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🛡️</div>
+            <h3>Secure & Compliant</h3>
+            <p>
+              Built with healthcare security standards in mind, ensuring patient
+              data protection and regulatory compliance.
+            </p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🏥</div>
+            <h3>Universal Compatibility</h3>
+            <p>
+              Works across all medical specialties and consultation contexts -
+              from general practice to specialized care.
+            </p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">📊</div>
+            <h3>Structured Data</h3>
+            <p>
+              Delivers information in a format ready for immediate review or
+              direct integration into Electronic Health Records.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+      <div class="container">
+        <div class="section-header">
+          <h2>How It Works</h2>
+          <p>
+            Simple, efficient process that integrates seamlessly into your
+            existing workflow
+          </p>
+        </div>
+        <div class="process-timeline">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Patient Receives Link</h3>
+              <p>
+                Patients receive a secure link via SMS, email, or patient portal
+                before their appointment.
+              </p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Interactive Data Collection</h3>
+              <p>
+                Our AI chatbot guides patients through relevant questions based
+                on their appointment type and medical history.
+              </p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Data Processing</h3>
+              <p>
+                Information is automatically structured, organized, and prepared
+                in a standardized format for healthcare providers.
+              </p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3>Ready for Review</h3>
+              <p>
+                Doctors receive comprehensive, organized patient information
+                ready for immediate review or EHR integration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>Powerful Features</h2>
+          <p>Everything you need to modernize patient data collection</p>
+        </div>
+        <div class="features-showcase">
+          <div class="feature-tabs">
+            <button
+              @click="activeTab = 'integration'"
+              :class="{ 'active': activeTab === 'integration' }"
+              class="tab-btn"
+            >
+              EHR Integration
+            </button>
+            <button
+              @click="activeTab = 'security'"
+              :class="{ 'active': activeTab === 'security' }"
+              class="tab-btn"
+            >
+              Security & Compliance
+            </button>
+            <button
+              @click="activeTab = 'customization'"
+              :class="{ 'active': activeTab === 'customization' }"
+              class="tab-btn"
+            >
+              Customization
+            </button>
+          </div>
+
+          <div class="tab-content">
+            <div x-show="activeTab === 'integration'" class="tab-panel">
+              <h3>Seamless EHR Integration</h3>
+              <ul>
+                <li>Direct API connections to major EHR systems</li>
+                <li>Standardized data formats (HL7, FHIR)</li>
+                <li>Real-time data synchronization</li>
+                <li>Custom integration support available</li>
+              </ul>
+            </div>
+            <div x-show="activeTab === 'security'" class="tab-panel">
+              <h3>Enterprise-Grade Security</h3>
+              <ul>
+                <li>HIPAA compliant infrastructure</li>
+                <li>End-to-end encryption</li>
+                <li>Secure data transmission and storage</li>
+                <li>Regular security audits and updates</li>
+              </ul>
+            </div>
+            <div x-show="activeTab === 'customization'" class="tab-panel">
+              <h3>Tailored to Your Practice</h3>
+              <ul>
+                <li>Specialty-specific question sets</li>
+                <li>Custom branding and styling</li>
+                <li>Configurable workflows</li>
+                <li>Multi-language support</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+      <div class="container">
+        <div class="section-header">
+          <h2>Simple, Transparent Pricing</h2>
+          <p>Choose the plan that fits your practice size and needs</p>
+        </div>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>Starter</h3>
+              <div class="price">
+                <span class="currency">$</span>
+                <span class="amount">50</span>
+                <span class="period">/month</span>
+              </div>
+            </div>
+            <ul class="pricing-features">
+              <li>Up to 100 patients/month</li>
+              <li>Basic EHR integration</li>
+              <li>Email support</li>
+              <li>Standard security features</li>
+            </ul>
+            <button class="btn btn-secondary btn-full">Start Free Trial</button>
+          </div>
+
+          <div class="pricing-card featured">
+            <div class="pricing-badge">Most Popular</div>
+            <div class="pricing-header">
+              <h3>Professional</h3>
+              <div class="price">
+                <span class="currency">$</span>
+                <span class="amount">150</span>
+                <span class="period">/month</span>
+              </div>
+            </div>
+            <ul class="pricing-features">
+              <li>Up to 500 patients/month</li>
+              <li>Advanced EHR integration</li>
+              <li>Priority support</li>
+              <li>Custom branding</li>
+              <li>Analytics dashboard</li>
+              <li>Multi-language support</li>
+            </ul>
+            <button class="btn btn-primary btn-full">Start Free Trial</button>
+          </div>
+
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>Enterprise</h3>
+              <div class="price">
+                <span class="currency">$</span>
+                <span class="amount">300</span>
+                <span class="period">/month</span>
+              </div>
+            </div>
+            <ul class="pricing-features">
+              <li>Unlimited patients</li>
+              <li>Full API access</li>
+              <li>Dedicated support team</li>
+              <li>Custom integrations</li>
+              <li>Advanced analytics</li>
+              <li>SLA guarantee</li>
+              <li>White-label options</li>
+            </ul>
+            <button class="btn btn-secondary btn-full">Contact Sales</button>
+          </div>
+        </div>
+
+        <!-- Customization Option -->
+        <div class="customization-section">
+          <div class="customization-card">
+            <div class="customization-header">
+              <h3>Custom Development</h3>
+              <p>Tailored solutions for unique requirements</p>
+            </div>
+            <div class="customization-content">
+              <div class="customization-price">
+                <span class="price-range">$10K - $30K</span>
+                <span class="price-label">One-time fee</span>
+              </div>
+              <ul class="customization-features">
+                <li>Complete custom development</li>
+                <li>Specialized workflow design</li>
+                <li>Proprietary integrations</li>
+                <li>Dedicated development team</li>
+                <li>Full source code ownership</li>
+                <li>Ongoing maintenance options</li>
+              </ul>
+              <button class="btn btn-primary btn-full">Discuss Project</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section id="demo" class="cta-section">
+      <div class="container">
+        <div class="cta-content">
+          <h2>Ready to Transform Your Practice?</h2>
+          <p>
+            See how our Pre-Anamnesis Chatbot can save time and improve patient
+            care
+          </p>
+          <div class="cta-form" x-data="{ submitted: false }">
+            <form
+              @submit.prevent="submitDemo(); submitted = true"
+              x-show="!submitted"
+            >
+              <div class="form-group">
+                <input type="text" placeholder="Your Name" required />
+                <input type="email" placeholder="Email Address" required />
+              </div>
+              <div class="form-group">
+                <input type="text" placeholder="Practice/Organization" />
+                <select required>
+                  <option value="">Select Specialty</option>
+                  <option value="general">General Practice</option>
+                  <option value="cardiology">Cardiology</option>
+                  <option value="dermatology">Dermatology</option>
+                  <option value="orthopedics">Orthopedics</option>
+                  <option value="pediatrics">Pediatrics</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg">
+                Request Demo
+              </button>
+            </form>
+            <div x-show="submitted" class="success-message">
+              <div class="success-icon">✅</div>
+              <h3>Thank You!</h3>
+              <p>
+                We'll be in touch within 24 hours to schedule your personalized
+                demo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="business-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Praana Anamnesis</h4>
+            <p>
+              Revolutionizing healthcare through the world's first dedicated
+              pre-anamnesis chatbot.
+            </p>
+          </div>
+          <div class="footer-section">
+            <h5>Product</h5>
+            <a href="#features">Features</a>
+            <a href="#benefits">Benefits</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+          <div class="footer-section">
+            <h5>Company</h5>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+            <a href="#privacy">Privacy</a>
+          </div>
+          <div class="footer-section">
+            <h5>Contact</h5>
+            <p>Email: hello@praana-anamnesis.com</p>
+            <p>Demo: <a href="#demo">Request Demo</a></p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Praana Anamnesis. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      function businessPage() {
+        return {
+          isMenuOpen: false,
+          activeTab: "integration",
+
+          init() {
+            // Initialize any needed functionality
+          },
+
+          toggleMenu() {
+            this.isMenuOpen = !this.isMenuOpen;
+          },
+
+          submitDemo() {
+            // Handle demo form submission
+            console.log("Demo request submitted");
+          },
+        };
+      }
+    </script>
+  </body>
+</html>

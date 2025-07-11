@@ -272,6 +272,27 @@ slots:
         conditions:
           - active_loop: medical_history_form
             requested_slot: recent_exams
+  exam_upload_status:
+    type: text
+    mappings:
+      - type: from_intent
+        intent: upload_more_files
+        value: "uploading"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: exam_upload_status
+      - type: from_intent
+        intent: no_more_files
+        value: "done"
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: exam_upload_status
+      - type: from_text
+        conditions:
+          - active_loop: medical_history_form
+            requested_slot: exam_upload_status
+
+
   
   recent_hospitalization:
     type: text
@@ -303,6 +324,7 @@ forms:
       - current_lab_username
       - current_lab_url
       - lab_credentials_status
+      - exam_upload_status
     
 
 responses:
@@ -405,6 +427,14 @@ responses:
           payload: "/add_more_credentials"
         - title: "No, I'm done"
           payload: "/done_adding_credentials"
+
+  utter_ask_exam_upload_status:
+    - text: "Do you want to upload more exam files?"
+      buttons:
+        - title: "Yes, upload more"
+          payload: "/upload_more_files"
+        - title: "No, I’m done"
+          payload: "/no_more_files"
 
   utter_ask_recent_hospitalization:
     - text: "Have you been hospitalized recently?"

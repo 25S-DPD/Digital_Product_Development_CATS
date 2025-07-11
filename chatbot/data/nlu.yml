@@ -34,10 +34,6 @@ nlu:
     - Not
     - n
 
-- intent: correct_data
-  examples: |
-    - change
-
 - intent: inform
   examples: |
     - I have asthma
@@ -80,29 +76,41 @@ nlu:
 
 # Add these intents to your nlu.yml file
 
-- intent: upload_more_files
+- intent: add_more_files
   examples: |
+    - yes upload more
+    - add more files
     - upload more files
-    - I have more files
-    - upload additional files
-    - more files to upload
-    - yes, I have more files
+    - more files
+    - yes more
     - I want to upload more
-    - upload more
-    - additional files
+    - upload additional files
+    - add additional files
 
-- intent: no_more_files
+- intent: done_uploading_files
   examples: |
     - no more files
-    - that's all
-    - no additional files
-    - I'm done uploading
-    - no more
-    - that's it
+    - done uploading
     - finished uploading
-    - no other files
-    - I don't have more files
-    - done
+    - no I'm done
+    - that's all
+    - completed
+    - finished
+    - done with files
+    - no more
+    - I'm done uploading
+
+- intent: upload_files
+  examples: |
+    - upload files
+    - I want to upload files
+    - upload documents
+    - upload test results
+    - upload images
+    - upload photos
+    - share files
+    - send files
+
 - intent: add_more_credentials
   examples: |
     - add more
@@ -117,3 +125,5 @@ nlu:
     - no more
     - that's all
     - complete
+
+  

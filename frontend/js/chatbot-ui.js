@@ -1,6 +1,6 @@
 /*
 Makes backend API call to rasa chatbot and display output to chatbot frontend
-Enhanced with JWT token handling from URL parameters (no automatic session start)
+Enhanced with JWT token handling from URL parameters and automatic file upload
 */
 
 function init() {
@@ -168,7 +168,46 @@ function extractTokenFromURL() {
     return null;
 }
 
-// REMOVED: sendSessionStart function - no longer needed
+// Function to extract patient ID from JWT token
+function extractPatientIdFromToken() {
+    if (!jwtToken) return null;
+    
+    try {
+        // Decode JWT token (assuming it's a standard JWT)
+        const payload = JSON.parse(atob(jwtToken.split('.')[1]));
+        return payload.patient_id || payload.sub || payload.userId;
+    } catch (error) {
+        console.error('Error decoding JWT token:', error);
+        return null;
+    }
+}
+
+// Function to extract patient ID from URL parameters
+function extractPatientIdFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('patient_id') || urlParams.get('patientId');
+}
+
+// Function to display uploading message
+function displayUploadingMessage(message) {
+    const uploadingMsg = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><span class='msg' style='color: #0066cc;'>${message}</span></div>`;
+    chatArea.innerHTML += uploadingMsg;
+    scrollToBottomOfResults();
+}
+
+// Function to display success message
+function displaySuccessMessage(message) {
+    const successMsg = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><span class='msg' style='color: green;'>${message}</span></div>`;
+    chatArea.innerHTML += successMsg;
+    scrollToBottomOfResults();
+}
+
+// Function to display error message
+function displayErrorMessage(message) {
+    const errorMsg = `<div class='bot-msg'><img class='bot-img' src ='${botLogoPath}' /><span class='msg' style='color: red;'>${message}</span></div>`;
+    chatArea.innerHTML += errorMsg;
+    scrollToBottomOfResults();
+}
 
 // Function to show authentication error (kept for potential future use)
 function showAuthenticationError() {
@@ -229,6 +268,7 @@ function declineStart() {
     }, 1000);
 }
 
+// Enhanced userResponseBtn function to handle file uploads
 function userResponseBtn(e) {
     // Check if user clicked upload button
     if (e.value === 'upload_files' || e.value === 'upload_more_files') {
@@ -243,13 +283,23 @@ function triggerFileUpload() {
     fileUpload.click();
 }
 
-// Function to handle file upload
+// Enhanced file upload function that automatically sends files to your API
 function handleFileUpload(event) {
     const files = event.target.files;
     if (files.length > 0) {
         let fileNames = [];
         let fileDetails = [];
         
+        // Extract patient_id from JWT token or URL parameters
+        const patientId = extractPatientIdFromToken() || extractPatientIdFromURL();
+        
+        if (!patientId) {
+            console.error("Patient ID not found");
+            displayErrorMessage("Unable to identify patient. Please refresh and try again.");
+            return;
+        }
+        
+        // Process each file
         for (let i = 0; i < files.length; i++) {
             fileNames.push(files[i].name);
             fileDetails.push({
@@ -257,12 +307,15 @@ function handleFileUpload(event) {
                 size: formatFileSize(files[i].size),
                 type: files[i].type
             });
+            
+            // Automatically upload each file to the server
+            uploadFileToServer(files[i], patientId);
         }
         
         // Display uploaded files in chat
         displayUploadedFiles(fileDetails);
         
-        // Send file information to Rasa
+        // Send file information to Rasa (this should trigger the "upload more?" question)
         const fileMessage = `Uploaded files: ${fileNames.join(', ')}`;
         send(fileMessage);
         
@@ -271,6 +324,40 @@ function handleFileUpload(event) {
     }
 }
 
+// Function to automatically upload file to your API endpoint
+async function uploadFileToServer(file, patientId) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('patient_id', patientId);
+    
+    // Show uploading status
+    displayUploadingMessage(`Uploading "${file.name}"...`);
+    
+    try {
+        const response = await fetch('https://redcore-latest.onrender.com/upload-public', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                // Add JWT token if needed for authentication
+                ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` })
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('File uploaded successfully:', result);
+            // Success message removed to prevent interference with chat flow
+            // displaySuccessMessage(`✅ "${file.name}" uploaded successfully`);
+        } else {
+            const error = await response.text();
+            console.error('File upload failed:', error);
+            displayErrorMessage(`❌ Failed to upload "${file.name}"`);
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        displayErrorMessage(`❌ Error uploading "${file.name}"`);
+    }
+}
 // Function to display uploaded files in chat
 function displayUploadedFiles(fileDetails) {
     let fileListHTML = '<div class="uploaded-files"><strong>Uploaded Files:</strong><ul>';
@@ -334,7 +421,7 @@ function scrollToBottomOfResults() {
 Frontend Part Completed
 ****************************************************************/
 
-// Enhanced send function with JWT token in metadata (unchanged)
+// Enhanced send function with JWT token in metadata
 function send(message) {
     // Disable input during initial ready check
     if (!chatStarted && message !== "hello") {
@@ -346,18 +433,29 @@ function send(message) {
     chatInput.focus();
     console.log("User Message:", message)
     
+    // Check if this is a file upload message
+    const isFileUpload = message.includes("Uploaded files:");
+    
     // Prepare request data with JWT token in metadata
     const requestData = {
         "message": message,
         "sender": "User"
     };
     
-    // Add JWT token to metadata if available
-    if (jwtToken) {
+    // Add metadata to indicate file upload context
+    if (isFileUpload) {
+        requestData.metadata = {
+            "message_type": "file_upload",
+            ...(jwtToken && { "jwt_token": jwtToken, "authorization": `Bearer ${jwtToken}` })
+        };
+    } else if (jwtToken) {
         requestData.metadata = {
             "jwt_token": jwtToken,
             "authorization": `Bearer ${jwtToken}`
         };
+    }
+    
+    if (jwtToken) {
         console.log("Sending message with JWT token in metadata");
     }
     
@@ -379,7 +477,6 @@ function send(message) {
     });
     chatInput.focus();
 }
-
 //------------------------------------ Set bot response -------------------------------------
 function setBotResponse(val) {
     setTimeout(function() {
